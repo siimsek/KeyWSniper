@@ -4,6 +4,7 @@ import os
 import asyncio
 import re
 from telethon import TelegramClient, events, Button
+from telethon.sessions import StringSession
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -19,6 +20,8 @@ SESSION_NAME = 'userbot_session'
 
 # Default: Your Bot Token
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+# Session String (For Render/Cloud)
+SESSION_STRING = os.getenv("SESSION_STRING", "")
 
 DATA_FILE = "bot_data.json"
 LOCALES_FILE = "locales.json"
@@ -133,7 +136,15 @@ if not API_ID or not API_HASH or not BOT_TOKEN:
     print("CRITICAL ERROR: Credentials missing. Please set them in .env file or hardcode them.")
     exit(1)
 
-userbot = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+if SESSION_STRING:
+    # Use String Session for Cloud (Render, Heroku, etc.)
+    print("💻 Using String Session for Auth...")
+    userbot = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
+else:
+    # Use File Session for Local
+    print("🏠 Using Local File Session...")
+    userbot = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+
 bot = TelegramClient('bot_session', API_ID, API_HASH)
 
 # ==========================================
@@ -250,7 +261,7 @@ async def callback_handler(event):
         
     elif data == "menu_help":
         await event.edit(
-            "KeyWSniper v1.1\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
+            "KeyWSniper v1.2\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
             buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
         )
 
