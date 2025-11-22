@@ -263,7 +263,7 @@ async def callback_handler(event):
             
         elif data == "menu_help":
             await event.edit(
-                "KeyWSniper v1.6.1\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
+                "KeyWSniper v1.6.2\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
                 buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
             )
 
@@ -341,6 +341,10 @@ async def input_handler(event):
 
     # Add Channel (Text Check)
     if state == "AWAIT_CHANNEL":
+        # Prevent double processing
+        if state_data.get("processing"): return
+        dm.user_states[event.sender_id]["processing"] = True
+
         channel_input = event.message.message.strip()
         
         # Format channel input
@@ -358,6 +362,10 @@ async def input_handler(event):
         )
 
     elif state == "AWAIT_KEYWORD":
+        # Prevent double processing
+        if state_data.get("processing"): return
+        dm.user_states[event.sender_id]["processing"] = True
+
         keyword = event.message.message.strip()
         channel = state_data.get("channel")
         
