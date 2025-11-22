@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+userbot_session.session
+userbot_session.session-journal
+bot_session.session
+bot_session.session-journal
+bot_data.json
+bot_backup.json
+*.log
+
