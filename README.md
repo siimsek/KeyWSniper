@@ -10,12 +10,45 @@ This project is a powerful Telegram monitoring tool that combines a **Userbot** 
 - 📦 **Backup & Restore:** Export and import your tracking list.
 - 🗑️ **Interactive Deletion:** Delete keywords by simply clicking buttons.
 
-## Prerequisites
-1. **Python 3.8+**
-2. **Telegram API ID & Hash:** Get them from [my.telegram.org](https://my.telegram.org).
-3. **Bot Token:** Get one from [@BotFather](https://t.me/BotFather).
+## 🚀 Deployment on Render.com (24/7 Online)
 
-## Installation
+To keep the bot running 24/7 for free/cheap using Render, follow these steps:
+
+### 1. Preparation
+1. Fork this repository to your GitHub account.
+2. Get your **API_ID** and **API_HASH** from [my.telegram.org](https://my.telegram.org).
+3. Get your **BOT_TOKEN** from [@BotFather](https://t.me/BotFather).
+4. **Generate Session String:**
+   - Run `python generate_session.py` on your local computer.
+   - Login with your phone number.
+   - Copy the long code starting with `1BVts...`.
+
+### 2. Render Setup
+1. Create a new **Web Service** on Render.
+2. Connect your GitHub repository.
+3. Settings:
+   - **Runtime:** Python 3
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `python bot.py`
+4. **Environment Variables:** Add the following keys in the "Environment" tab:
+   
+   | Key | Value | Description |
+   | :--- | :--- | :--- |
+   | `API_ID` | `123456` | Your Telegram API ID |
+   | `API_HASH` | `abc123...` | Your Telegram API Hash |
+   | `BOT_TOKEN` | `123:ABC...` | Your Bot Token from BotFather |
+   | `SESSION_STRING` | `1BVts...` | The code you got from generate_session.py |
+   | `PYTHON_VERSION` | `3.10.0` | (Optional) To ensure compatibility |
+
+### 3. 💾 Data Persistence (Important!)
+On Render (and most cloud platforms), files are deleted when the bot restarts or you deploy a new version. **To keep your channel list safe:**
+
+- **Option A (Free):** Use the **Backup** button in the bot settings before every update. After update, use **Import** to restore.
+- **Option B (Automatic):** Add a **Disk** in Render settings:
+  - **Mount Path:** `/opt/render/project/src`
+  - This will ensure `bot_data.json` is never deleted.
+
+## Local Installation
 
 1. **Clone the repository:**
    ```bash
@@ -28,26 +61,10 @@ This project is a powerful Telegram monitoring tool that combines a **Userbot** 
    pip install -r requirements.txt
    ```
 
-3. **Configuration:**
-   - Open the `.env` file.
-   - Fill in your credentials:
-     ```ini
-     API_ID=12345678
-     API_HASH=your_api_hash_here
-     BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
-     ```
-
-4. **Run the bot:**
+3. **Run the bot:**
    ```bash
    python bot.py
    ```
-   - On the first run, it will ask for your phone number and the code sent to your Telegram account to authorize the Userbot.
-
-## Usage
-1. Open your bot in Telegram (`/start`).
-2. Use the **Add Track** button to follow a channel and keyword.
-   - You can use channel username (`@channel`), link (`t.me/channel`), or ID (`-100...`).
-3. The bot will send you a notification message whenever a matching keyword is found in the monitored channels.
 
 ## Disclaimer
 This tool is for educational purposes only. Use it responsibly and in accordance with Telegram's Terms of Service.

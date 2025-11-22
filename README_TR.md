@@ -10,12 +10,45 @@ Bu proje, **Userbot** (yönetici izni olmadan kanalları okuma) ve **Bot Arayüz
 - 📦 **Yedekleme & Geri Yükleme:** Takip listenizi yedekleyin ve geri yükleyin.
 - 🗑️ **Kolay Silme:** Tek tıkla listeden silme işlemi yapın.
 
-## Gereksinimler
-1. **Python 3.8+**
-2. **Telegram API ID & Hash:** [my.telegram.org](https://my.telegram.org) adresinden alın.
-3. **Bot Token:** [@BotFather](https://t.me/BotFather) üzerinden alın.
+## 🚀 Render.com Üzerinde Kurulum (7/24 Aktif)
 
-## Kurulum
+Botun sürekli açık kalması için Render kullanabilirsiniz. Adımlar şöyledir:
+
+### 1. Hazırlık
+1. Bu repoyu kendi GitHub hesabınıza "Fork"layın.
+2. [my.telegram.org](https://my.telegram.org) adresinden **API_ID** ve **API_HASH** alın.
+3. [@BotFather](https://t.me/BotFather)'dan **BOT_TOKEN** alın.
+4. **Session Kodu Oluşturma:**
+   - Bilgisayarınızda `python generate_session.py` dosyasını çalıştırın.
+   - Telefon numaranızla giriş yapın.
+   - Size verilen `1BVts...` ile başlayan uzun kodu kopyalayın.
+
+### 2. Render Ayarları
+1. Render'da yeni bir **Web Service** oluşturun.
+2. GitHub reponuzu bağlayın.
+3. Ayarlar:
+   - **Runtime:** Python 3
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `python bot.py`
+4. **Environment Variables (Ortam Değişkenleri):** Şu bilgileri ekleyin:
+   
+   | Anahtar (Key) | Değer (Value) | Açıklama |
+   | :--- | :--- | :--- |
+   | `API_ID` | `123456` | Telegram API ID'niz |
+   | `API_HASH` | `abc123...` | Telegram API Hash kodunuz |
+   | `BOT_TOKEN` | `123:ABC...` | BotFather'dan alınan token |
+   | `SESSION_STRING` | `1BVts...` | generate_session.py'den aldığınız kod |
+   | `PYTHON_VERSION` | `3.10.0` | (Opsiyonel) Uyumluluk için |
+
+### 3. 💾 Veri Kalıcılığı (Önemli!)
+Render gibi bulut sistemlerinde bot yeniden başladığında dosyalar silinir (takip listeniz gider). Bunu önlemek için:
+
+- **Seçenek A (Ücretsiz):** Bot ayarlarından ara sıra **Yedekle** butonunu kullanın. Güncelleme sonrası **İçe Aktar** ile verileri geri yükleyin.
+- **Seçenek B (Otomatik):** Render ayarlarından bir **Disk** ekleyin:
+  - **Mount Path (Bağlama Yolu):** `/opt/render/project/src`
+  - Bu ayar yapıldığında `bot_data.json` dosyası asla silinmez.
+
+## Yerel Kurulum (Kendi Bilgisayarınızda)
 
 1. **Depoyu indirin:**
    ```bash
@@ -28,22 +61,10 @@ Bu proje, **Userbot** (yönetici izni olmadan kanalları okuma) ve **Bot Arayüz
    pip install -r requirements.txt
    ```
 
-3. **Ayarlar:**
-   - `.env` dosyasını açın.
-   - Bilgilerinizi girin:
-     ```ini
-     API_ID=12345678
-     API_HASH=api_hash_kodunuz
-     BOT_TOKEN=bot_token_kodunuz
-     ```
-
-4. **Botu çalıştırın:**
+3. **Botu çalıştırın:**
    ```bash
    python bot.py
    ```
-   - İlk çalıştırmada telefon numaranızı girip Telegram'dan gelen kodu onaylamanız istenecektir.
 
-## Kullanım
-1. Telegram'da botunuzu başlatın (`/start`).
-2. **Takip Ekle** butonunu kullanarak kanal ve kelime ekleyin.
-3. Bot, eşleşen bir mesaj bulduğunda size anında bildirim gönderecektir.
+## Sorumluluk Reddi
+Bu araç sadece eğitim amaçlıdır. Telegram Hizmet Koşullarına uygun şekilde sorumlu bir şekilde kullanın.

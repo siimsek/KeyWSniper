@@ -10,12 +10,44 @@ Dieses Projekt ist ein leistungsstarkes Telegram-Überwachungstool, das einen **
 - 📦 **Backup & Wiederherstellung:** Exportieren und importieren Sie Ihre Tracking-Liste.
 - 🗑️ **Interaktives Löschen:** Löschen Sie Schlüsselwörter einfach per Knopfdruck.
 
-## Voraussetzungen
-1. **Python 3.8+**
-2. **Telegram API ID & Hash:** Erhalten Sie diese von [my.telegram.org](https://my.telegram.org).
-3. **Bot Token:** Erhalten Sie einen von [@BotFather](https://t.me/BotFather).
+## 🚀 Bereitstellung auf Render.com (24/7 Online)
 
-## Installation
+Damit der Bot rund um die Uhr läuft, folgen Sie diesen Schritten:
+
+### 1. Vorbereitung
+1. Forken Sie dieses Repository.
+2. Holen Sie sich **API_ID** und **API_HASH** von [my.telegram.org](https://my.telegram.org).
+3. Holen Sie sich **BOT_TOKEN** von [@BotFather](https://t.me/BotFather).
+4. **Sitzungscode generieren:**
+   - Führen Sie `python generate_session.py` lokal aus.
+   - Melden Sie sich an.
+   - Kopieren Sie den langen Code (`1BVts...`).
+
+### 2. Render-Einstellungen
+1. Erstellen Sie einen neuen **Web Service** auf Render.
+2. Verbinden Sie Ihr GitHub-Repository.
+3. Einstellungen:
+   - **Runtime:** Python 3
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `python bot.py`
+4. **Umgebungsvariablen:**
+   
+   | Schlüssel | Wert | Beschreibung |
+   | :--- | :--- | :--- |
+   | `API_ID` | `123456` | Ihre Telegram API ID |
+   | `API_HASH` | `abc123...` | Ihr Telegram API Hash |
+   | `BOT_TOKEN` | `123:ABC...` | Bot-Token von BotFather |
+   | `SESSION_STRING` | `1BVts...` | Code von generate_session.py |
+
+### 3. 💾 Datenpersistenz (Wichtig!)
+Auf Render werden Dateien beim Neustart gelöscht. Um Ihre Daten zu sichern:
+
+- **Option A (Kostenlos):** Nutzen Sie die **Backup**-Taste im Bot. Nach dem Update nutzen Sie **Import**.
+- **Option B (Automatisch):** Fügen Sie in den Render-Einstellungen eine **Disk** hinzu:
+  - **Mount Path:** `/opt/render/project/src`
+  - Dies verhindert das Löschen von `bot_data.json`.
+
+## Lokale Installation
 
 1. **Repository klonen:**
    ```bash
@@ -28,24 +60,7 @@ Dieses Projekt ist ein leistungsstarkes Telegram-Überwachungstool, das einen **
    pip install -r requirements.txt
    ```
 
-3. **Konfiguration:**
-   - Öffnen Sie die Datei `.env`.
-   - Geben Sie Ihre Anmeldedaten ein:
-     ```ini
-     API_ID=12345678
-     API_HASH=ihr_api_hash_hier
-     BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
-     ```
-
-4. **Bot starten:**
+3. **Bot starten:**
    ```bash
    python bot.py
    ```
-   - Beim ersten Start werden Sie nach Ihrer Telefonnummer und dem an Ihr Telegram-Konto gesendeten Code gefragt, um den Userbot zu autorisieren.
-
-## Nutzung
-1. Öffnen Sie Ihren Bot in Telegram (`/start`).
-2. Verwenden Sie die Schaltfläche **Hinzufügen**, um einen Kanal und ein Schlüsselwort zu folgen.
-   - Sie können Kanal-Benutzernamen (`@channel`), Links (`t.me/channel`) oder IDs (`-100...`) verwenden.
-3. Der Bot sendet Ihnen eine Benachrichtigung, sobald ein passendes Schlüsselwort in den überwachten Kanälen gefunden wird.
-
