@@ -250,7 +250,7 @@ async def callback_handler(event):
         
     elif data == "menu_help":
         await event.edit(
-            "KeyWSniper v1.0\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
+            "KeyWSniper v1.1\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
             buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
         )
 
