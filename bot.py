@@ -314,72 +314,81 @@ async def input_handler(event):
     state_data = dm.user_states.get(event.sender_id, {})
     state = state_data.get("state")
 
-    # Import (File Check)
-    if state == "AWAIT_IMPORT":
-        if event.message.file:
-            try:
-                file_path = await event.download_media()
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    new_data = json.load(f)
-                
-                count = dm.import_data(new_data)
-                os.remove(file_path)
-                dm.user_states[event.sender_id] = {} # Reset state
-                
-                await event.respond(
-                    f"{dm.t('import_success')} (+{count})",
-                    buttons=[[Button.inline(dm.t("btn_back"), b"menu_settings")]]
-                )
-            except Exception as e:
-                await event.respond(
-                    f"{dm.t('import_error')}\nError: {str(e)}",
-                    buttons=[[Button.inline(dm.t("btn_cancel"), b"menu_settings")]]
-                )
-        else:
-            await event.respond(dm.t("import_intro"))
+    if not state: return
+
+    # Global Lock Check
+    if state_data.get("processing"):
         return
+    
+    dm.user_states[event.sender_id]["processing"] = True
 
-    # Add Channel (Text Check)
-    if state == "AWAIT_CHANNEL":
-        # Prevent double processing
-        if state_data.get("processing"): return
-        dm.user_states[event.sender_id]["processing"] = True
+    try:
+        # Import (File Check)
+        if state == "AWAIT_IMPORT":
+            if event.message.file:
+                try:
+                    file_path = await event.download_media()
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        new_data = json.load(f)
+                    
+                    count = dm.import_data(new_data)
+                    os.remove(file_path)
+                    dm.user_states[event.sender_id] = {} # Reset state
+                    
+                    await event.respond(
+                        f"{dm.t('import_success')} (+{count})",
+                        buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
+                    )
+                except Exception as e:
+                    dm.user_states[event.sender_id]["processing"] = False # Unlock on error
+                    await event.respond(
+                        f"{dm.t('import_error')}\nError: {str(e)}",
+                        buttons=[[Button.inline(dm.t("btn_cancel"), b"menu_settings")]]
+                    )
+            else:
+                dm.user_states[event.sender_id]["processing"] = False # Unlock
+                await event.respond(dm.t("import_intro"))
+            return
 
-        channel_input = event.message.message.strip()
-        
-        # Format channel input
-        match = re.search(r"(?:t|telegram)\.me/(?P<username>[\w_]+)", channel_input)
-        if match:
-            channel_input = f"@{match.group('username')}"
-        elif not channel_input.startswith("@") and not re.match(r"^-?\d+$", channel_input):
-             channel_input = f"@{channel_input}"
-
-        dm.user_states[event.sender_id] = {"state": "AWAIT_KEYWORD", "channel": channel_input}
-        
-        await event.respond(
-            dm.t("add_step_2", channel=channel_input),
-            buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
-        )
-
-    elif state == "AWAIT_KEYWORD":
-        # Prevent double processing
-        if state_data.get("processing"): return
-        dm.user_states[event.sender_id]["processing"] = True
-
-        keyword = event.message.message.strip()
-        channel = state_data.get("channel")
-        
-        if dm.add_keyword(channel, keyword):
-            msg = dm.t("add_success", channel=channel, keyword=keyword)
-        else:
-            msg = dm.t("add_fail_exist")
+        # Add Channel (Text Check)
+        if state == "AWAIT_CHANNEL":
+            channel_input = event.message.message.strip()
             
-        dm.user_states[event.sender_id] = {}
-        
-        await event.respond(msg, buttons=[
-            [Button.inline(dm.t("btn_add"), b"menu_add")], # Add again
-            [Button.inline(dm.t("btn_back"), b"main_menu")]
-        ])
+            # Format channel input
+            match = re.search(r"(?:t|telegram)\.me/(?P<username>[\w_]+)", channel_input)
+            if match:
+                channel_input = f"@{match.group('username')}"
+            elif not channel_input.startswith("@") and not re.match(r"^-?\d+$", channel_input):
+                 channel_input = f"@{channel_input}"
+
+            dm.user_states[event.sender_id] = {"state": "AWAIT_KEYWORD", "channel": channel_input}
+            
+            await event.respond(
+                dm.t("add_step_2", channel=channel_input),
+                buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
+            )
+
+        elif state == "AWAIT_KEYWORD":
+            keyword = event.message.message.strip()
+            channel = state_data.get("channel")
+            
+            if dm.add_keyword(channel, keyword):
+                msg = dm.t("add_success", channel=channel, keyword=keyword)
+            else:
+                msg = dm.t("add_fail_exist")
+                
+            dm.user_states[event.sender_id] = {}
+            
+            await event.respond(msg, buttons=[
+                [Button.inline(dm.t("btn_add"), b"menu_add")], # Add again
+                [Button.inline(dm.t("btn_back"), b"main_menu")]
+            ])
+            
+    except Exception as e:
+        logging.error(f"Input Handler Error: {e}")
+        # Release lock in case of critical error
+        if event.sender_id in dm.user_states:
+             dm.user_states[event.sender_id]["processing"] = False
 
 # ==========================================
 # USERBOT LISTENER (BACKGROUND)
