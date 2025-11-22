@@ -261,7 +261,7 @@ async def callback_handler(event):
         
     elif data == "menu_help":
         await event.edit(
-            "KeyWSniper v1.2\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
+            "KeyWSniper v1.3\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
             buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
         )
 
@@ -429,8 +429,34 @@ async def channel_watcher(event):
             except Exception as e:
                 logging.error(f"Notification Error: {e}")
 
+# ==========================================
+# DUMMY WEB SERVER (FOR RENDER HEALTH CHECK)
+# ==========================================
+from aiohttp import web
+
+async def handle_health(request):
+    return web.Response(text="KeyWSniper is running!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle_health)
+    app.router.add_get('/health', handle_health)
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    # Render provides PORT env variable
+    port = int(os.getenv("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"🌍 Web server started on port {port}")
+
 async def main():
     print("System starting...")
+    
+    # Start Web Server for Render
+    await start_web_server()
+    
     print("1. Connecting Userbot...")
     await userbot.start()
     print("2. Connecting Bot Interface...")

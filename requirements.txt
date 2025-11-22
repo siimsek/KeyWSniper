@@ -1,2 +1,3 @@
 Telethon
-dotenv
+python-dotenv
+aiohttp
