@@ -42,36 +42,6 @@ class DataManager:
         # State management (Like a State Machine)
         self.user_states = {}  # {user_id: {"state": "ADDING_CHANNEL", "temp_data": {...}}}
 
-    async def auto_backup(self):
-        """Backs up data to Telegram Cloud (Saved Messages)"""
-        owner_id = self.get_owner()
-        if not owner_id: return
-        
-        try:
-            backup_name = f"auto_backup_{self.data_path}"
-            with open(self.data_path, 'r', encoding='utf-8') as f:
-                await bot.send_file(owner_id, f, caption="#KeyWSniper_Backup\nAuto-generated backup.", force_document=True)
-        except Exception as e:
-            logging.error(f"Auto Backup Failed: {e}")
-
-    async def restore_from_cloud(self):
-        """Restores data from the last Telegram Cloud backup"""
-        owner_id = self.get_owner()
-        if not owner_id: return
-
-        print("☁️ Checking for cloud backups...")
-        try:
-            # Search for the last message with specific caption from the bot itself
-            async for msg in bot.iter_messages(owner_id, limit=50, search="#KeyWSniper_Backup"):
-                if msg.file:
-                    print("📥 Found backup! Restoring...")
-                    path = await msg.download_media(file=self.data_path)
-                    self.data = self.load_json(path, self.data)
-                    print("✅ Data restored from cloud.")
-                    return
-        except Exception as e:
-             logging.error(f"Cloud Restore Failed: {e}")
-
     def load_json(self, filepath, default):
         if not os.path.exists(filepath):
             return default
@@ -86,14 +56,6 @@ class DataManager:
         try:
             with open(self.data_path, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f, ensure_ascii=False, indent=4)
-            
-            # Trigger async backup if running loop exists
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(self.auto_backup())
-            except RuntimeError:
-                pass # No loop running yet
-                
         except Exception as e:
             logging.error(f"Data Save Error: {e}")
 
@@ -299,7 +261,7 @@ async def callback_handler(event):
         
     elif data == "menu_help":
         await event.edit(
-            "KeyWSniper v1.5\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
+            "KeyWSniper v1.6\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
             buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
         )
 
@@ -499,10 +461,6 @@ async def main():
     await userbot.start()
     print("2. Connecting Bot Interface...")
     await bot.start(bot_token=BOT_TOKEN)
-    
-    # Try to restore data from cloud
-    await dm.restore_from_cloud()
-    
     print("✅ System Ready!")
     await asyncio.gather(userbot.run_until_disconnected(), bot.run_until_disconnected())
 
