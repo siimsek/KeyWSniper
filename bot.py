@@ -5,6 +5,7 @@ import asyncio
 import re
 from telethon import TelegramClient, events, Button
 from telethon.sessions import StringSession
+from telethon.errors import MessageNotModifiedError
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -170,127 +171,134 @@ async def bot_start(event):
 
 @bot.on(events.CallbackQuery)
 async def callback_handler(event):
-    data = event.data.decode('utf-8')
-    owner_id = dm.get_owner()
-    
-    if event.sender_id != owner_id:
-        await event.answer("⛔", alert=True)
-        return
-
-    # --- MAIN MENU ---
-    if data == "main_menu":
-        dm.user_states[owner_id] = {} # Clear state
-        await event.edit(dm.t("menu_main"), buttons=await get_main_menu())
-
-    # --- ADD WIZARD ---
-    elif data == "menu_add":
-        dm.user_states[owner_id] = {"state": "AWAIT_CHANNEL"}
-        await event.edit(
-            dm.t("add_step_1"),
-            buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
-        )
-    
-    # --- DELETE MENU (INTERACTIVE LIST) ---
-    elif data == "menu_del":
-        channels = dm.get_all_channels()
-        if not channels:
-            await event.edit(dm.t("list_empty"), buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]])
+    try:
+        data = event.data.decode('utf-8')
+        owner_id = dm.get_owner()
+        
+        if event.sender_id != owner_id:
+            await event.answer("⛔", alert=True)
             return
-            
-        buttons = []
-        for ch, kws in channels.items():
-            for kw in kws:
-                safe_kw = kw[:20] # Truncate long keywords
-                btn_data = f"del_ask|{ch}|{kw}".encode('utf-8')
-                buttons.append([Button.inline(f"❌ {ch} - {safe_kw}", btn_data)])
-        
-        buttons.append([Button.inline(dm.t("btn_back"), b"main_menu")])
-        await event.edit(dm.t("del_menu"), buttons=buttons)
 
-    elif data.startswith("del_ask|"):
-        _, channel, keyword = data.split("|", 2)
-        await event.edit(
-            dm.t("del_confirm", channel=channel, keyword=keyword),
-            buttons=[
-                [Button.inline(dm.t("confirm_yes"), f"del_do|{channel}|{keyword}".encode('utf-8'))],
-                [Button.inline(dm.t("confirm_no"), b"menu_del")]
-            ]
-        )
+        # --- MAIN MENU ---
+        if data == "main_menu":
+            dm.user_states[owner_id] = {} # Clear state
+            await event.edit(dm.t("menu_main"), buttons=await get_main_menu())
 
-    elif data.startswith("del_do|"):
-        _, channel, keyword = data.split("|", 2)
-        dm.remove_keyword(channel, keyword)
-        await event.edit(dm.t("del_success"), buttons=[[Button.inline(dm.t("btn_back"), b"menu_del")]])
-
-    # --- LIST ---
-    elif data == "menu_list":
-        channels = dm.get_all_channels()
-        if not channels:
-            msg = dm.t("list_empty")
-        else:
-            msg = dm.t("list_header")
-            for ch, kws in channels.items():
-                msg += f"📢 `{ch}`\n"
-                for k in kws:
-                    msg += f"   🔹 {k}\n"
-                msg += "\n"
-        
-        await event.edit(msg, buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]])
-
-    # --- SETTINGS ---
-    elif data == "menu_settings":
-        buttons = [
-            [Button.inline("🌐 Dil / Language", b"menu_lang")],
-            [Button.inline(dm.t("btn_backup"), b"backup_create"), Button.inline(dm.t("btn_import"), b"backup_import")],
-            [Button.inline(dm.t("btn_back"), b"main_menu")]
-        ]
-        await event.edit(dm.t("settings_menu"), buttons=buttons)
-
-    elif data == "menu_lang":
-        buttons = [
-            [Button.inline("🇹🇷 Türkçe", b"set_lang_TR"), Button.inline("🇬🇧 English", b"set_lang_EN")],
-            [Button.inline("🇷🇺 Русский", b"set_lang_RU"), Button.inline("🇩🇪 Deutsch", b"set_lang_DE")],
-            [Button.inline(dm.t("btn_back"), b"menu_settings")]
-        ]
-        await event.edit(dm.t("settings_lang"), buttons=buttons)
-
-    elif data.startswith("set_lang_"):
-        lang_code = data.split("_")[2]
-        dm.set_language(lang_code)
-        await event.edit(dm.t("lang_set"), buttons=[[Button.inline(dm.t("btn_back"), b"menu_settings")]])
-        
-    elif data == "menu_help":
-        await event.edit(
-            "KeyWSniper v1.6\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
-            buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
-        )
-
-    # --- BACKUP AND IMPORT ---
-    elif data == "backup_create":
-        # Create temp file
-        backup_file = "bot_backup.json"
-        try:
-            with open(backup_file, 'w', encoding='utf-8') as f:
-                # Backup only channels
-                json.dump({"channels": dm.data.get("channels", {})}, f, ensure_ascii=False, indent=4)
-            
-            await event.client.send_file(
-                owner_id, 
-                backup_file, 
-                caption=dm.t("backup_caption")
+        # --- ADD WIZARD ---
+        elif data == "menu_add":
+            dm.user_states[owner_id] = {"state": "AWAIT_CHANNEL"}
+            await event.edit(
+                dm.t("add_step_1"),
+                buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
             )
-            os.remove(backup_file) # Cleanup
-        except Exception as e:
-            logging.error(f"Backup Error: {e}")
         
-        await event.answer("✅")
+        # --- DELETE MENU (INTERACTIVE LIST) ---
+        elif data == "menu_del":
+            channels = dm.get_all_channels()
+            if not channels:
+                await event.edit(dm.t("list_empty"), buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]])
+                return
+                
+            buttons = []
+            for ch, kws in channels.items():
+                for kw in kws:
+                    safe_kw = kw[:20] # Truncate long keywords
+                    btn_data = f"del_ask|{ch}|{kw}".encode('utf-8')
+                    buttons.append([Button.inline(f"❌ {ch} - {safe_kw}", btn_data)])
+            
+            buttons.append([Button.inline(dm.t("btn_back"), b"main_menu")])
+            await event.edit(dm.t("del_menu"), buttons=buttons)
 
-    elif data == "backup_import":
-        dm.user_states[owner_id] = {"state": "AWAIT_IMPORT"}
-        await event.edit(
-            dm.t("import_intro"),
-            buttons=[[Button.inline(dm.t("btn_cancel"), b"menu_settings")]]
-        )
+        elif data.startswith("del_ask|"):
+            _, channel, keyword = data.split("|", 2)
+            await event.edit(
+                dm.t("del_confirm", channel=channel, keyword=keyword),
+                buttons=[
+                    [Button.inline(dm.t("confirm_yes"), f"del_do|{channel}|{keyword}".encode('utf-8'))],
+                    [Button.inline(dm.t("confirm_no"), b"menu_del")]
+                ]
+            )
+
+        elif data.startswith("del_do|"):
+            _, channel, keyword = data.split("|", 2)
+            dm.remove_keyword(channel, keyword)
+            await event.edit(dm.t("del_success"), buttons=[[Button.inline(dm.t("btn_back"), b"menu_del")]])
+
+        # --- LIST ---
+        elif data == "menu_list":
+            channels = dm.get_all_channels()
+            if not channels:
+                msg = dm.t("list_empty")
+            else:
+                msg = dm.t("list_header")
+                for ch, kws in channels.items():
+                    msg += f"📢 `{ch}`\n"
+                    for k in kws:
+                        msg += f"   🔹 {k}\n"
+                    msg += "\n"
+            
+            await event.edit(msg, buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]])
+
+        # --- SETTINGS ---
+        elif data == "menu_settings":
+            buttons = [
+                [Button.inline("🌐 Dil / Language", b"menu_lang")],
+                [Button.inline(dm.t("btn_backup"), b"backup_create"), Button.inline(dm.t("btn_import"), b"backup_import")],
+                [Button.inline(dm.t("btn_back"), b"main_menu")]
+            ]
+            await event.edit(dm.t("settings_menu"), buttons=buttons)
+
+        elif data == "menu_lang":
+            buttons = [
+                [Button.inline("🇹🇷 Türkçe", b"set_lang_TR"), Button.inline("🇬🇧 English", b"set_lang_EN")],
+                [Button.inline("🇷🇺 Русский", b"set_lang_RU"), Button.inline("🇩🇪 Deutsch", b"set_lang_DE")],
+                [Button.inline(dm.t("btn_back"), b"menu_settings")]
+            ]
+            await event.edit(dm.t("settings_lang"), buttons=buttons)
+
+        elif data.startswith("set_lang_"):
+            lang_code = data.split("_")[2]
+            dm.set_language(lang_code)
+            await event.edit(dm.t("lang_set"), buttons=[[Button.inline(dm.t("btn_back"), b"menu_settings")]])
+            
+        elif data == "menu_help":
+            await event.edit(
+                "KeyWSniper v1.6.1\nCreated by @siimsek\nGitHub: https://github.com/siimsek/KeyWSniper", 
+                buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
+            )
+
+        # --- BACKUP AND IMPORT ---
+        elif data == "backup_create":
+            # Create temp file
+            backup_file = "bot_backup.json"
+            try:
+                with open(backup_file, 'w', encoding='utf-8') as f:
+                    # Backup only channels
+                    json.dump({"channels": dm.data.get("channels", {})}, f, ensure_ascii=False, indent=4)
+                
+                await event.client.send_file(
+                    owner_id, 
+                    backup_file, 
+                    caption=dm.t("backup_caption")
+                )
+                os.remove(backup_file) # Cleanup
+            except Exception as e:
+                logging.error(f"Backup Error: {e}")
+            
+            await event.answer("✅")
+
+        elif data == "backup_import":
+            dm.user_states[owner_id] = {"state": "AWAIT_IMPORT"}
+            await event.edit(
+                dm.t("import_intro"),
+                buttons=[[Button.inline(dm.t("btn_cancel"), b"menu_settings")]]
+            )
+
+    except MessageNotModifiedError:
+        # Ignore if message content hasn't changed
+        pass
+    except Exception as e:
+        logging.error(f"Callback Error: {e}")
 
 # --- LISTEN FOR TEXT/FILE INPUTS (FOR WIZARD) ---
 @bot.on(events.NewMessage())
