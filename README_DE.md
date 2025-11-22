@@ -43,9 +43,21 @@ Damit der Bot rund um die Uhr läuft, folgen Sie diesen Schritten:
 Auf Render werden Dateien beim Neustart gelöscht. Um Ihre Daten zu sichern:
 
 - **Option A (Kostenlos):** Nutzen Sie die **Backup**-Taste im Bot. Nach dem Update nutzen Sie **Import**.
-- **Option B (Automatisch):** Fügen Sie in den Render-Einstellungen eine **Disk** hinzu:
-  - **Mount Path:** `/opt/render/project/src`
-  - Dies verhindert das Löschen von `bot_data.json`.
+- **Option B (Automatisch):** Der Bot sichert Daten automatisch im Telegram-Chat und stellt sie beim Start wieder her.
+- **Option C (Disk):** Fügen Sie in den Render-Einstellungen eine **Disk** hinzu (Mount Path: `/opt/render/project/src`).
+
+## 🔄 Wachhalten (Keep Alive)
+
+Render versetzt Dienste im kostenlosen Tarif bei Inaktivität in den Ruhezustand. Um dies zu verhindern:
+
+1. Kopieren Sie Ihre Render Web Service URL (z. B. `https://keywsniper.onrender.com`).
+2. Gehen Sie zu [UptimeRobot](https://uptimerobot.com/) und erstellen Sie ein kostenloses Konto.
+3. Klicken Sie auf **"Add New Monitor"**.
+   - **Monitor Type:** HTTP(s)
+   - **Friendly Name:** KeyWSniper
+   - **URL:** Fügen Sie Ihre Render URL ein
+   - **Monitoring Interval:** 5 minutes (5 Minuten)
+4. Speichern Sie. UptimeRobot pingt Ihren Bot alle 5 Minuten an, um ihn wach zu halten.
 
 ## Lokale Installation
 

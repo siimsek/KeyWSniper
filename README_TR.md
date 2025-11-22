@@ -44,9 +44,21 @@ Botun sürekli açık kalması için Render kullanabilirsiniz. Adımlar şöyled
 Render gibi bulut sistemlerinde bot yeniden başladığında dosyalar silinir (takip listeniz gider). Bunu önlemek için:
 
 - **Seçenek A (Ücretsiz):** Bot ayarlarından ara sıra **Yedekle** butonunu kullanın. Güncelleme sonrası **İçe Aktar** ile verileri geri yükleyin.
-- **Seçenek B (Otomatik):** Render ayarlarından bir **Disk** ekleyin:
-  - **Mount Path (Bağlama Yolu):** `/opt/render/project/src`
-  - Bu ayar yapıldığında `bot_data.json` dosyası asla silinmez.
+- **Seçenek B (Otomatik):** Bot verileri otomatik olarak Telegram sohbetinize yedekler ve açılışta geri yükler.
+- **Seçenek C (Disk):** Render ayarlarından bir **Disk** ekleyin (Bağlama Yolu: `/opt/render/project/src`).
+
+## 🔄 Botu Uyutmamak (Keep Alive)
+
+Render ücretsiz paketi, işlem yapılmadığında servisi uyku moduna alır. Bunu engellemek için:
+
+1. Render Web Service URL adresinizi kopyalayın (Örn: `https://keywsniper.onrender.com`).
+2. [UptimeRobot](https://uptimerobot.com/) sitesine gidin ve ücretsiz hesap açın.
+3. **"Add New Monitor"** butonuna tıklayın.
+   - **Monitor Type:** HTTP(s)
+   - **Friendly Name:** KeyWSniper
+   - **URL:** Render adresinizi yapıştırın
+   - **Monitoring Interval:** 5 minutes (5 dakika)
+4. Kaydedin. UptimeRobot botunuza 5 dakikada bir ping atarak uyumasını engelleyecektir.
 
 ## Yerel Kurulum (Kendi Bilgisayarınızda)
 

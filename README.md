@@ -44,9 +44,21 @@ To keep the bot running 24/7 for free/cheap using Render, follow these steps:
 On Render (and most cloud platforms), files are deleted when the bot restarts or you deploy a new version. **To keep your channel list safe:**
 
 - **Option A (Free):** Use the **Backup** button in the bot settings before every update. After update, use **Import** to restore.
-- **Option B (Automatic):** Add a **Disk** in Render settings:
-  - **Mount Path:** `/opt/render/project/src`
-  - This will ensure `bot_data.json` is never deleted.
+- **Option B (Automatic):** The bot automatically backs up data to your Telegram chat. It restores it on startup.
+- **Option C (Disk):** Add a **Disk** in Render settings (Mount Path: `/opt/render/project/src`).
+
+## 🔄 Keep Alive (Prevent Sleeping)
+
+Render free tier puts services to sleep after inactivity. To prevent this:
+
+1. Copy your Render Web Service URL (e.g., `https://keywsniper.onrender.com`).
+2. Go to [UptimeRobot](https://uptimerobot.com/) and create a free account.
+3. Click **"Add New Monitor"**.
+   - **Monitor Type:** HTTP(s)
+   - **Friendly Name:** KeyWSniper
+   - **URL:** Paste your Render URL
+   - **Monitoring Interval:** 5 minutes
+4. Save. UptimeRobot will ping your bot every 5 minutes to keep it awake.
 
 ## Local Installation
 
