@@ -29,7 +29,7 @@ Damit der Bot rund um die Uhr läuft, folgen Sie diesen Schritten:
 3. Einstellungen:
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `python bot.py`
+   - **Start Command:** `python main.py`
 4. **Umgebungsvariablen:**
    
    | Schlüssel | Wert | Beschreibung |
@@ -74,5 +74,14 @@ Render versetzt Dienste im kostenlosen Tarif bei Inaktivität in den Ruhezustand
 
 3. **Bot starten:**
    ```bash
-   python bot.py
+   python main.py
    ```
+
+## 🐳 Docker-Unterstützung
+
+Sie können den Bot auch mit Docker ausführen:
+
+```bash
+docker build -t keywsniper .
+docker run --env-file .env keywsniper
+```

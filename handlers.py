@@ -1,152 +1,10 @@
-import logging
-import json
-import os
-import asyncio
 import re
-from telethon import TelegramClient, events, Button
-from telethon.sessions import StringSession
+import os
+import json
+import logging
+from telethon import events, Button
 from telethon.errors import MessageNotModifiedError
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-# ==========================================
-# CONFIGURATION
-# ==========================================
-# You can hardcode your credentials here OR use .env file
-API_ID = int(os.getenv("API_ID", "0"))
-API_HASH = os.getenv("API_HASH", "")
-SESSION_NAME = 'userbot_session'
-
-# Default: Your Bot Token
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-# Session String (For Render/Cloud)
-SESSION_STRING = os.getenv("SESSION_STRING", "")
-
-DATA_FILE = "bot_data.json"
-LOCALES_FILE = "locales.json"
-
-# Logging configuration
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
-# ==========================================
-# DATA MANAGEMENT & LOCALIZATION
-# ==========================================
-class DataManager:
-    def __init__(self):
-        self.data_path = DATA_FILE
-        self.locales_path = LOCALES_FILE
-        self.data = self.load_json(self.data_path, {"channels": {}, "owner_id": None, "lang": "TR"})
-        self.locales = self.load_json(self.locales_path, {})
-        
-        # State management (Like a State Machine)
-        self.user_states = {}  # {user_id: {"state": "ADDING_CHANNEL", "temp_data": {...}}}
-
-    def load_json(self, filepath, default):
-        if not os.path.exists(filepath):
-            return default
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            logging.error(f"JSON Load Error ({filepath}): {e}")
-            return default
-
-    def save_data(self):
-        try:
-            with open(self.data_path, 'w', encoding='utf-8') as f:
-                json.dump(self.data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            logging.error(f"Data Save Error: {e}")
-
-    def t(self, key, **kwargs):
-        """Translation function"""
-        lang = self.data.get("lang", "TR")
-        text = self.locales.get(lang, {}).get(key, key)
-        if kwargs:
-            return text.format(**kwargs)
-        return text
-
-    def set_owner(self, user_id):
-        self.data["owner_id"] = user_id
-        self.save_data()
-
-    def get_owner(self):
-        return self.data.get("owner_id")
-
-    def set_language(self, lang_code):
-        self.data["lang"] = lang_code
-        self.save_data()
-
-    def add_keyword(self, channel, keyword):
-        channels = self.data.setdefault("channels", {})
-        channel = str(channel)
-        if channel not in channels:
-            channels[channel] = []
-            
-        # Case-insensitive check
-        if keyword.lower() not in [k.lower() for k in channels[channel]]:
-            channels[channel].append(keyword)
-            self.save_data()
-            return True
-        return False
-
-    def remove_keyword(self, channel, keyword):
-        channels = self.data.get("channels", {})
-        channel = str(channel)
-        if channel in channels:
-            initial_len = len(channels[channel])
-            channels[channel] = [k for k in channels[channel] if k.lower() != keyword.lower()]
-            if len(channels[channel]) < initial_len:
-                if not channels[channel]:
-                    del channels[channel]
-                self.save_data()
-                return True
-        return False
-    
-    def import_data(self, new_data):
-        """Merges data from a backup file"""
-        count = 0
-        if "channels" in new_data:
-            for ch, keywords in new_data["channels"].items():
-                for kw in keywords:
-                    if self.add_keyword(ch, kw):
-                        count += 1
-        return count
-
-    def get_all_channels(self):
-        return self.data.get("channels", {})
-    
-    def get_keywords(self, channel_id=None, channel_username=None):
-        channels = self.data.get("channels", {})
-        keywords = []
-        if channel_id and str(channel_id) in channels:
-            keywords.extend(channels[str(channel_id)])
-        if channel_username:
-            u1 = f"@{channel_username}" if not channel_username.startswith("@") else channel_username
-            u2 = channel_username.lstrip("@")
-            if u1 in channels: keywords.extend(channels[u1])
-            if u2 in channels: keywords.extend(channels[u2])
-        return list(set(keywords))
-
-dm = DataManager()
-
-# Check if credentials exist either in env or as default fallback
-if not API_ID or not API_HASH or not BOT_TOKEN:
-    print("CRITICAL ERROR: Credentials missing. Please set them in .env file or hardcode them.")
-    exit(1)
-
-if SESSION_STRING:
-    # Use String Session for Cloud (Render, Heroku, etc.)
-    print("💻 Using String Session for Auth...")
-    userbot = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
-else:
-    # Use File Session for Local
-    print("🏠 Using Local File Session...")
-    userbot = TelegramClient(SESSION_NAME, API_ID, API_HASH)
-
-bot = TelegramClient('bot_session', API_ID, API_HASH)
+from database import dm
 
 # ==========================================
 # BOT INTERFACE (ADVANCED MENU)
@@ -159,7 +17,6 @@ async def get_main_menu():
         [Button.inline(dm.t("btn_help"), b"menu_help")]
     ]
 
-@bot.on(events.NewMessage(pattern='/start'))
 async def bot_start(event):
     sender = await event.get_sender()
     dm.set_owner(sender.id)
@@ -169,7 +26,6 @@ async def bot_start(event):
         buttons=await get_main_menu()
     )
 
-@bot.on(events.CallbackQuery)
 async def callback_handler(event):
     try:
         data = event.data.decode('utf-8')
@@ -301,7 +157,6 @@ async def callback_handler(event):
         logging.error(f"Callback Error: {e}")
 
 # --- LISTEN FOR TEXT/FILE INPUTS (FOR WIZARD) ---
-@bot.on(events.NewMessage())
 async def input_handler(event):
     # Only from owner and private chat
     if event.sender_id != dm.get_owner() or not event.is_private:
@@ -393,8 +248,7 @@ async def input_handler(event):
 # ==========================================
 # USERBOT LISTENER (BACKGROUND)
 # ==========================================
-@userbot.on(events.NewMessage())
-async def channel_watcher(event):
+async def channel_watcher(event, bot_client):
     if not event.is_channel and not event.is_group:
         return
 
@@ -445,7 +299,7 @@ async def channel_watcher(event):
                     f"{display_text}"
                 )
                 
-                await bot.send_message(
+                await bot_client.send_message(
                     owner_id,
                     notification_text,
                     link_preview=False,
@@ -453,44 +307,3 @@ async def channel_watcher(event):
                 )
             except Exception as e:
                 logging.error(f"Notification Error: {e}")
-
-# ==========================================
-# DUMMY WEB SERVER (FOR RENDER HEALTH CHECK)
-# ==========================================
-from aiohttp import web
-
-async def handle_health(request):
-    return web.Response(text="KeyWSniper is running!")
-
-async def start_web_server():
-    app = web.Application()
-    app.router.add_get('/', handle_health)
-    app.router.add_get('/health', handle_health)
-    
-    runner = web.AppRunner(app)
-    await runner.setup()
-    
-    # Render provides PORT env variable
-    port = int(os.getenv("PORT", 8080))
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-    print(f"🌍 Web server started on port {port}")
-
-async def main():
-    print("System starting...")
-    
-    # Start Web Server for Render
-    await start_web_server()
-    
-    print("1. Connecting Userbot...")
-    await userbot.start()
-    print("2. Connecting Bot Interface...")
-    await bot.start(bot_token=BOT_TOKEN)
-    print("✅ System Ready!")
-    await asyncio.gather(userbot.run_until_disconnected(), bot.run_until_disconnected())
-
-if __name__ == '__main__':
-    # Asyncio loop fix for Python 3.10+
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(main())

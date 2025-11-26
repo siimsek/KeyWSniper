@@ -29,7 +29,7 @@ To keep the bot running 24/7 for free/cheap using Render, follow these steps:
 3. Settings:
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `python bot.py`
+   - **Start Command:** `python main.py`
 4. **Environment Variables:** Add the following keys in the "Environment" tab:
    
    | Key | Value | Description |
@@ -75,8 +75,17 @@ Render free tier puts services to sleep after inactivity. To prevent this:
 
 3. **Run the bot:**
    ```bash
-   python bot.py
+   python main.py
    ```
+
+## 🐳 Docker Support
+
+You can also run the bot using Docker:
+
+```bash
+docker build -t keywsniper .
+docker run --env-file .env keywsniper
+```
 
 ## Disclaimer
 This tool is for educational purposes only. Use it responsibly and in accordance with Telegram's Terms of Service.

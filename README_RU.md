@@ -29,7 +29,7 @@
 3. Настройки:
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `python bot.py`
+   - **Start Command:** `python main.py`
 4. **Переменные окружения (Environment Variables):**
    
    | Ключ | Значение | Описание |
@@ -74,5 +74,14 @@
 
 3. **Запустите бота:**
    ```bash
-   python bot.py
+   python main.py
    ```
+
+## 🐳 Поддержка Docker
+
+Вы также можете запустить бота с помощью Docker:
+
+```bash
+docker build -t keywsniper .
+docker run --env-file .env keywsniper
+```

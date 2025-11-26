@@ -29,7 +29,7 @@ Botun sürekli açık kalması için Render kullanabilirsiniz. Adımlar şöyled
 3. Ayarlar:
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `python bot.py`
+   - **Start Command:** `python main.py`
 4. **Environment Variables (Ortam Değişkenleri):** Şu bilgileri ekleyin:
    
    | Anahtar (Key) | Değer (Value) | Açıklama |
@@ -75,8 +75,17 @@ Render ücretsiz paketi, işlem yapılmadığında servisi uyku moduna alır. Bu
 
 3. **Botu çalıştırın:**
    ```bash
-   python bot.py
+   python main.py
    ```
+
+## 🐳 Docker Desteği
+
+Botu Docker kullanarak da çalıştırabilirsiniz:
+
+```bash
+docker build -t keywsniper .
+docker run --env-file .env keywsniper
+```
 
 ## Sorumluluk Reddi
 Bu araç sadece eğitim amaçlıdır. Telegram Hizmet Koşullarına uygun şekilde sorumlu bir şekilde kullanın.
