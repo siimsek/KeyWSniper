@@ -5,7 +5,7 @@ import logging
 from telethon import events, Button
 from telethon.errors import MessageNotModifiedError
 from database import dm
-from version import __version__
+from config import VERSION
 
 # ==========================================
 # BOT INTERFACE (ADVANCED MENU)
@@ -120,7 +120,7 @@ async def callback_handler(event):
             
         elif data == "menu_help":
             await event.edit(
-                f"🛡️ **KeyWSniper v{__version__}**\n\n"
+                f"🛡️ **KeyWSniper v{VERSION}**\n\n"
                 "🚀 **Geliştirici / Developer:** @siimsek\n"
                 "📂 **GitHub:** [Source Code](https://github.com/siimsek/KeyWSniper)\n\n"
                 "ℹ️ *Bu bot açık kaynaklıdır ve sürekli geliştirilmektedir.*",
