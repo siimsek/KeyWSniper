@@ -58,7 +58,14 @@ async def callback_handler(event):
                 
             buttons = []
             for ch, kws in channels.items():
-                for kw in kws:
+            for ch, kws in channels.items():
+                for kw_entry in kws:
+                    # Handle both string and object formats
+                    if isinstance(kw_entry, dict):
+                        kw = kw_entry["keyword"]
+                    else:
+                        kw = kw_entry
+                        
                     safe_kw = kw[:20] # Truncate long keywords
                     btn_data = f"del_ask|{ch}|{kw}".encode('utf-8')
                     buttons.append([Button.inline(f"❌ {ch} - {safe_kw}", btn_data)])
@@ -90,8 +97,15 @@ async def callback_handler(event):
                 msg = dm.t("list_header")
                 for ch, kws in channels.items():
                     msg += f"📢 `{ch}`\n"
-                    for k in kws:
-                        msg += f"   🔹 {k}\n"
+                    for k_entry in kws:
+                        if isinstance(k_entry, dict):
+                            kw = k_entry["keyword"]
+                            note = k_entry.get("note", "")
+                            display = f"{kw} ({note})" if note else kw
+                        else:
+                            display = k_entry
+                            
+                        msg += f"   🔹 {display}\n"
                     msg += "\n"
             
             await event.edit(msg, buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]])
@@ -231,8 +245,27 @@ async def input_handler(event):
             keyword = event.message.message.strip()
             channel = state_data.get("channel")
             
-            if dm.add_keyword(channel, keyword):
-                msg = dm.t("add_success", channel=channel, keyword=keyword)
+            # Move to next step: Ask for Note
+            dm.user_states[event.sender_id] = {
+                "state": "AWAIT_NOTE", 
+                "channel": channel, 
+                "keyword": keyword
+            }
+            
+            await event.respond(
+                dm.t("add_step_3", keyword=keyword),
+                buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
+            )
+
+        elif state == "AWAIT_NOTE":
+            note = event.message.message.strip()
+            # If user sends "-" or "skip", we can treat as empty, but let's just take input as is.
+            
+            channel = state_data.get("channel")
+            keyword = state_data.get("keyword")
+            
+            if dm.add_keyword(channel, keyword, note):
+                msg = dm.t("add_success", channel=channel, keyword=keyword, note=note)
             else:
                 msg = dm.t("add_fail_exist")
                 
@@ -278,15 +311,20 @@ async def channel_watcher(event, bot_client):
         return
 
     text_lower = text.lower()
-    matched_keyword = None
+    matched_entry = None
     
     # Partial match check
-    for k in keywords:
-        if k.lower() in text_lower:
-            matched_keyword = k
+    for entry in keywords:
+        # keywords is now a list of objects from get_keywords
+        kw = entry["keyword"]
+        if kw.lower() in text_lower:
+            matched_entry = entry
             break
     
-    if matched_keyword:
+    if matched_entry:
+        matched_keyword = matched_entry["keyword"]
+        matched_note = matched_entry.get("note", "")
+        
         print(f"✅ MATCH: {chat_title} -> {matched_keyword}")
         owner_id = dm.get_owner()
         if owner_id:
@@ -295,12 +333,20 @@ async def channel_watcher(event, bot_client):
                 msg_link = f"https://t.me/{chat_username}/{event.id}" if chat_username else f"https://t.me/c/{chat_id}/{event.id}"
                 display_text = text[:3000] + "..." if len(text) > 3000 else text
                 
+                # Format:
+                # Caught: KEYWORD
+                # Note (if exists)
+                # Source
+                # Link
+                # Message
+                
+                note_part = f"\n📝 **Not:** {matched_note}\n" if matched_note else ""
+                
                 notification_text = (
-                    f"{dm.t('notification_title', keyword=matched_keyword.upper())}\n\n"
+                    f"{dm.t('notification_title', keyword=matched_keyword.upper())}\n"
+                    f"{note_part}\n"
                     f"{dm.t('notification_channel', channel=chat_title)}\n"
-                    f"🔗 [Link]({msg_link})\n"
-                    f"──────────────\n"
-                    f"{display_text}"
+                    f"🔗 [Link]({msg_link})"
                 )
                 
                 await bot_client.send_message(

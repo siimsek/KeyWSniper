@@ -8,6 +8,7 @@ This project is a powerful Telegram monitoring tool that combines a **Userbot** 
 - 🌐 **Multi-Language:** Supports English, Turkish, Russian, and German.
 - 🔔 **Instant Notifications:** Get notified immediately when a keyword is mentioned.
 - 📦 **Backup & Restore:** Export and import your tracking list.
+- 📝 **Custom Notes:** Add descriptions or links to your tracking keywords.
 - 🗑️ **Interactive Deletion:** Delete keywords by simply clicking buttons.
 
 ## 🚀 Deployment on Render.com (24/7 Online)

@@ -8,6 +8,7 @@ Dieses Projekt ist ein leistungsstarkes Telegram-Überwachungstool, das einen **
 - 🌐 **Mehrsprachig:** Unterstützt Englisch, Türkisch, Russisch und Deutsch.
 - 🔔 **Sofortbenachrichtigungen:** Werden Sie sofort benachrichtigt, wenn ein Schlüsselwort erwähnt wird.
 - 📦 **Backup & Wiederherstellung:** Exportieren und importieren Sie Ihre Tracking-Liste.
+- 📝 **Benutzerdefinierte Notizen:** Fügen Sie Ihren Suchbegriffen Beschreibungen oder Links hinzu.
 - 🗑️ **Interaktives Löschen:** Löschen Sie Schlüsselwörter einfach per Knopfdruck.
 
 ## 🚀 Bereitstellung auf Render.com (24/7 Online)

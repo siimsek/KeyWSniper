@@ -8,6 +8,7 @@ Bu proje, **Userbot** (yönetici izni olmadan kanalları okuma) ve **Bot Arayüz
 - 🌐 **Çoklu Dil:** İngilizce, Türkçe, Rusça ve Almanca desteği.
 - 🔔 **Anlık Bildirimler:** Kelimeniz geçtiğinde anında bildirim alın.
 - 📦 **Yedekleme & Geri Yükleme:** Takip listenizi yedekleyin ve geri yükleyin.
+- 📝 **Özel Notlar:** Takip ettiğiniz kelimelere açıklama veya link ekleyin.
 - 🗑️ **Kolay Silme:** Tek tıkla listeden silme işlemi yapın.
 
 ## 🚀 Render.com Üzerinde Kurulum (7/24 Aktif)

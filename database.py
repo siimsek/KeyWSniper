@@ -59,15 +59,22 @@ class DataManager:
         self.data["lang"] = lang_code
         self.save_data()
 
-    def add_keyword(self, channel, keyword):
+    def add_keyword(self, channel, keyword, note=""):
         channels = self.data.setdefault("channels", {})
         channel = str(channel)
         if channel not in channels:
             channels[channel] = []
             
-        # Case-insensitive check
-        if keyword.lower() not in [k.lower() for k in channels[channel]]:
-            channels[channel].append(keyword)
+        # Helper to get keyword string from entry
+        def get_kw_str(entry):
+            return entry["keyword"] if isinstance(entry, dict) else entry
+
+        # Check if keyword exists (case-insensitive)
+        existing_keywords = [get_kw_str(k).lower() for k in channels[channel]]
+        
+        if keyword.lower() not in existing_keywords:
+            # Store as object: {"keyword": "foo", "note": "bar"}
+            channels[channel].append({"keyword": keyword, "note": note})
             self.save_data()
             return True
         return False
@@ -77,7 +84,15 @@ class DataManager:
         channel = str(channel)
         if channel in channels:
             initial_len = len(channels[channel])
-            channels[channel] = [k for k in channels[channel] if k.lower() != keyword.lower()]
+            
+            new_list = []
+            for entry in channels[channel]:
+                k_str = entry["keyword"] if isinstance(entry, dict) else entry
+                if k_str.lower() != keyword.lower():
+                    new_list.append(entry)
+            
+            channels[channel] = new_list
+            
             if len(channels[channel]) < initial_len:
                 if not channels[channel]:
                     del channels[channel]
@@ -89,9 +104,17 @@ class DataManager:
         """Merges data from a backup file"""
         count = 0
         if "channels" in new_data:
-            for ch, keywords in new_data["channels"].items():
-                for kw in keywords:
-                    if self.add_keyword(ch, kw):
+            for ch, items in new_data["channels"].items():
+                for item in items:
+                    # Handle both old string format and new dict format
+                    if isinstance(item, dict):
+                        kw = item.get("keyword")
+                        note = item.get("note", "")
+                    else:
+                        kw = item
+                        note = ""
+                        
+                    if kw and self.add_keyword(ch, kw, note):
                         count += 1
         return count
 
@@ -101,22 +124,40 @@ class DataManager:
     def get_keywords(self, channel_id=None, channel_username=None):
         """
         Optimized keyword retrieval using cache.
+        Returns list of objects: [{"keyword": "...", "note": "..."}]
         """
-        keywords = []
+        raw_items = []
         
         # Check by ID
         if channel_id and str(channel_id) in self._keywords_cache:
-            keywords.extend(self._keywords_cache[str(channel_id)])
+            raw_items.extend(self._keywords_cache[str(channel_id)])
             
         # Check by Username
         if channel_username:
             u1 = f"@{channel_username}" if not channel_username.startswith("@") else channel_username
             u2 = channel_username.lstrip("@")
             
-            if u1 in self._keywords_cache: keywords.extend(self._keywords_cache[u1])
-            if u2 in self._keywords_cache: keywords.extend(self._keywords_cache[u2])
+            if u1 in self._keywords_cache: raw_items.extend(self._keywords_cache[u1])
+            if u2 in self._keywords_cache: raw_items.extend(self._keywords_cache[u2])
             
-        return list(set(keywords))
+        # Normalize to objects and deduplicate
+        # Deduplication based on keyword string to avoid duplicates from multiple ID matches
+        seen_kws = set()
+        normalized_items = []
+        
+        for item in raw_items:
+            if isinstance(item, dict):
+                kw = item["keyword"]
+                note = item.get("note", "")
+            else:
+                kw = item
+                note = ""
+            
+            if kw.lower() not in seen_kws:
+                seen_kws.add(kw.lower())
+                normalized_items.append({"keyword": kw, "note": note})
+                
+        return normalized_items
 
 # Global DataManager instance
 dm = DataManager()
