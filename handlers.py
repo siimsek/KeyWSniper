@@ -58,7 +58,6 @@ async def callback_handler(event):
                 
             buttons = []
             for ch, kws in channels.items():
-            for ch, kws in channels.items():
                 for kw_entry in kws:
                     # Handle both string and object formats
                     if isinstance(kw_entry, dict):
