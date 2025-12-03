@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import asyncio
 import os
@@ -62,6 +63,13 @@ async def main():
     await start_web_server()
     
     print("1. Connecting Userbot...")
+    await userbot.connect()
+    if not await userbot.is_user_authorized():
+        print("⚠️ Userbot NOT authorized. Interactive login might be required.")
+        print("Please check your SESSION_STRING if you expected automatic login.")
+    else:
+        print("✅ Userbot Authorized via Session.")
+        
     await userbot.start()
     print("2. Connecting Bot Interface...")
     await bot.start(bot_token=BOT_TOKEN)

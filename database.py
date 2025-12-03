@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import logging
@@ -7,7 +8,12 @@ class DataManager:
     def __init__(self):
         self.data_path = DATA_FILE
         self.locales_path = LOCALES_FILE
-        self.data = self.load_json(self.data_path, {"channels": {}, "owner_id": None, "lang": "TR"})
+        self.data = self.load_json(self.data_path, {
+            "channels": {}, 
+            "owner_id": None, 
+            "lang": "TR",
+            "dnd_settings": {"enabled": False, "start": "23:00", "end": "08:00"}
+        })
         self.locales = self.load_json(self.locales_path, {})
         
         # State management (Like a State Machine)
@@ -241,6 +247,41 @@ class DataManager:
                 normalized_items.append({"keyword": kw, "note": note})
                 
         return normalized_items
+
+    # ==========================================
+    # DND (DO NOT DISTURB) SETTINGS
+    # ==========================================
+    def set_dnd(self, enabled=None, start=None, end=None):
+        dnd = self.data.setdefault("dnd_settings", {"enabled": False, "start": "23:00", "end": "08:00"})
+        
+        if enabled is not None:
+            dnd["enabled"] = enabled
+        if start is not None:
+            dnd["start"] = start
+        if end is not None:
+            dnd["end"] = end
+            
+        self.save_data()
+
+    def get_dnd(self):
+        return self.data.get("dnd_settings", {"enabled": False, "start": "23:00", "end": "08:00"})
+
+    def is_dnd_active(self):
+        """Checks if current time is within DND window."""
+        dnd = self.get_dnd()
+        if not dnd.get("enabled", False):
+            return False
+
+        from datetime import datetime
+        now = datetime.now()
+        current_time = now.strftime("%H:%M")
+        start = dnd.get("start", "23:00")
+        end = dnd.get("end", "08:00")
+
+        if start > end: # Crosses midnight (e.g. 23:00 to 08:00)
+            return current_time >= start or current_time < end
+        else: # Same day (e.g. 14:00 to 16:00)
+            return start <= current_time < end
 
 # Global DataManager instance
 dm = DataManager()

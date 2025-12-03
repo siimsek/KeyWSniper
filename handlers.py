@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import os
 import json
@@ -135,6 +136,7 @@ async def callback_handler(event):
         elif data == "menu_settings":
             buttons = [
                 [Button.inline("🌐 Dil / Language", b"menu_lang")],
+                [Button.inline(dm.t("btn_dnd"), b"menu_dnd")],
                 [Button.inline(dm.t("btn_backup"), b"backup_create"), Button.inline(dm.t("btn_import"), b"backup_import")],
                 [Button.inline(dm.t("btn_back"), b"main_menu")]
             ]
@@ -187,6 +189,45 @@ async def callback_handler(event):
             await event.edit(
                 dm.t("import_intro"),
                 buttons=[[Button.inline(dm.t("btn_cancel"), b"menu_settings")]]
+            )
+
+        # --- DND MENU ---
+        elif data == "menu_dnd":
+            dnd = dm.get_dnd()
+            status = dm.t("dnd_enabled") if dnd["enabled"] else dm.t("dnd_disabled")
+            
+            buttons = [
+                [Button.inline(dm.t("btn_disable") if dnd["enabled"] else dm.t("btn_enable"), b"dnd_toggle")],
+                [Button.inline(dm.t("btn_set_time"), b"dnd_set_time")],
+                [Button.inline(dm.t("btn_back"), b"menu_settings")]
+            ]
+            
+            await event.edit(
+                dm.t("dnd_menu", status=status, start=dnd["start"], end=dnd["end"]),
+                buttons=buttons
+            )
+
+        elif data == "dnd_toggle":
+            dnd = dm.get_dnd()
+            dm.set_dnd(enabled=not dnd["enabled"])
+            # Refresh menu
+            dnd = dm.get_dnd()
+            status = dm.t("dnd_enabled") if dnd["enabled"] else dm.t("dnd_disabled")
+            buttons = [
+                [Button.inline(dm.t("btn_disable") if dnd["enabled"] else dm.t("btn_enable"), b"dnd_toggle")],
+                [Button.inline(dm.t("btn_set_time"), b"dnd_set_time")],
+                [Button.inline(dm.t("btn_back"), b"menu_settings")]
+            ]
+            await event.edit(
+                dm.t("dnd_menu", status=status, start=dnd["start"], end=dnd["end"]),
+                buttons=buttons
+            )
+
+        elif data == "dnd_set_time":
+            dm.user_states[owner_id] = {"state": "AWAIT_DND_TIME"}
+            await event.edit(
+                dm.t("dnd_time_prompt"),
+                buttons=[[Button.inline(dm.t("btn_cancel"), b"menu_dnd")]]
             )
 
     except MessageNotModifiedError:
@@ -242,6 +283,29 @@ async def input_handler(event):
             else:
                 dm.user_states[event.sender_id]["processing"] = False # Unlock
                 await event.respond(dm.t("import_intro"))
+            return
+
+        # DND Time Setting
+        if state == "AWAIT_DND_TIME":
+            time_input = event.message.message.strip()
+            # Validate format HH:MM-HH:MM
+            match = re.match(r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]-([0-1]?[0-9]|2[0-3]):[0-5][0-9]$", time_input)
+            
+            if match:
+                start, end = time_input.split("-")
+                dm.set_dnd(start=start, end=end)
+                dm.user_states[event.sender_id] = {} # Reset
+                
+                await event.respond(
+                    dm.t("dnd_time_success", start=start, end=end),
+                    buttons=[[Button.inline(dm.t("btn_back"), b"menu_dnd")]]
+                )
+            else:
+                dm.user_states[event.sender_id]["processing"] = False # Unlock to try again
+                await event.respond(
+                    dm.t("dnd_time_error"),
+                    buttons=[[Button.inline(dm.t("btn_cancel"), b"menu_dnd")]]
+                )
             return
 
         # Add Channel (Text Check)
@@ -410,12 +474,18 @@ async def channel_watcher(event, bot_client):
                 note_part = f"\n📝 **Not:** {matched_note}\n" if matched_note else ""
                 
                 notification_text = (
-                    f"{dm.t('notification_title', keyword=matched_keyword.upper())}\n"
-                    f"{note_part}\n"
+                    f"{dm.t('notification_title', keyword=matched_keyword.upper())}\n\n"
                     f"{dm.t('notification_channel', channel=chat_title)}\n"
-                    f"🔗 [Link]({msg_link})"
+                    f"🔗 [Link]({msg_link})\n"
+                    f"──────────────\n"
+                    f"{display_text}"
                 )
                 
+                # Check DND
+                if dm.is_dnd_active():
+                    print(f"🌙 DND Active. Silencing notification for {matched_keyword}")
+                    return
+
                 await bot_client.send_message(
                     owner_id,
                     notification_text,
