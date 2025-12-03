@@ -13,9 +13,8 @@ from config import VERSION
 
 async def get_main_menu():
     return [
-        [Button.inline(dm.t("btn_add"), b"menu_add"), Button.inline(dm.t("btn_del"), b"menu_del")],
-        [Button.inline(dm.t("btn_list"), b"menu_list"), Button.inline(dm.t("btn_settings"), b"menu_settings")],
-        [Button.inline(dm.t("btn_help"), b"menu_help")]
+        [Button.inline(dm.t("btn_add"), b"menu_add"), Button.inline(dm.t("btn_list"), b"menu_list")],
+        [Button.inline(dm.t("btn_settings"), b"menu_settings"), Button.inline(dm.t("btn_help"), b"menu_help")]
     ]
 
 async def bot_start(event):
@@ -46,11 +45,12 @@ async def callback_handler(event):
             dm.user_states[owner_id] = {"state": "AWAIT_CHANNEL"}
             await event.edit(
                 dm.t("add_step_1"),
+                link_preview=False,
                 buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
             )
         
-        # --- DELETE MENU (INTERACTIVE LIST) ---
-        elif data == "menu_del":
+        # --- LIST MENU (INTERACTIVE) ---
+        elif data == "menu_list":
             channels = dm.get_all_channels()
             if not channels:
                 await event.edit(dm.t("list_empty"), buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]])
@@ -66,48 +66,70 @@ async def callback_handler(event):
                         kw = kw_entry
                         
                     safe_kw = kw[:20] # Truncate long keywords
-                    btn_data = f"del_ask|{ch}|{kw}".encode('utf-8')
-                    buttons.append([Button.inline(f"❌ {ch} - {safe_kw}", btn_data)])
+                    # Data format: view_track|CHANNEL|KEYWORD
+                    btn_data = f"view_track|{ch}|{kw}".encode('utf-8')
+                    buttons.append([Button.inline(f"🔎 {ch} - {safe_kw}", btn_data)])
             
             buttons.append([Button.inline(dm.t("btn_back"), b"main_menu")])
-            await event.edit(dm.t("del_menu"), buttons=buttons)
+            await event.edit(dm.t("list_header"), buttons=buttons)
 
+        # --- VIEW TRACK DETAIL ---
+        elif data.startswith("view_track|"):
+            _, channel, keyword = data.split("|", 2)
+            data_entry = dm.get_keyword_data(channel, keyword)
+            
+            if not data_entry:
+                await event.answer(dm.t("error_not_found"), alert=True)
+                await event.edit(dm.t("list_header"), buttons=[[Button.inline(dm.t("btn_back"), b"menu_list")]])
+                return
+
+            note = data_entry.get("note", "-")
+            
+            msg = dm.t("track_detail", channel=channel, keyword=keyword, note=note)
+            
+            buttons = [
+                [Button.inline(dm.t("btn_edit_channel"), f"edit_ask|channel|{channel}|{keyword}".encode('utf-8'))],
+                [Button.inline(dm.t("btn_edit_keyword"), f"edit_ask|keyword|{channel}|{keyword}".encode('utf-8'))],
+                [Button.inline(dm.t("btn_edit_note"), f"edit_ask|note|{channel}|{keyword}".encode('utf-8'))],
+                [Button.inline(dm.t("btn_del"), f"del_ask|{channel}|{keyword}".encode('utf-8'))],
+                [Button.inline(dm.t("btn_back"), b"menu_list")]
+            ]
+            await event.edit(msg, link_preview=False, buttons=buttons)
+
+        # --- DELETE CONFIRMATION ---
         elif data.startswith("del_ask|"):
             _, channel, keyword = data.split("|", 2)
             await event.edit(
                 dm.t("del_confirm", channel=channel, keyword=keyword),
                 buttons=[
                     [Button.inline(dm.t("confirm_yes"), f"del_do|{channel}|{keyword}".encode('utf-8'))],
-                    [Button.inline(dm.t("confirm_no"), b"menu_del")]
+                    [Button.inline(dm.t("confirm_no"), f"view_track|{channel}|{keyword}".encode('utf-8'))]
                 ]
             )
 
         elif data.startswith("del_do|"):
             _, channel, keyword = data.split("|", 2)
             dm.remove_keyword(channel, keyword)
-            await event.edit(dm.t("del_success"), buttons=[[Button.inline(dm.t("btn_back"), b"menu_del")]])
+            await event.edit(dm.t("del_success"), buttons=[[Button.inline(dm.t("btn_back"), b"menu_list")]])
 
-        # --- LIST ---
-        elif data == "menu_list":
-            channels = dm.get_all_channels()
-            if not channels:
-                msg = dm.t("list_empty")
-            else:
-                msg = dm.t("list_header")
-                for ch, kws in channels.items():
-                    msg += f"📢 `{ch}`\n"
-                    for k_entry in kws:
-                        if isinstance(k_entry, dict):
-                            kw = k_entry["keyword"]
-                            note = k_entry.get("note", "")
-                            display = f"{kw} ({note})" if note else kw
-                        else:
-                            display = k_entry
-                            
-                        msg += f"   🔹 {display}\n"
-                    msg += "\n"
+        # --- EDIT ASK ---
+        elif data.startswith("edit_ask|"):
+            _, field, channel, keyword = data.split("|", 3)
             
-            await event.edit(msg, buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]])
+            prompt_key = f"edit_prompt_{field}"
+            dm.user_states[owner_id] = {
+                "state": "AWAIT_EDIT_INPUT",
+                "field": field,
+                "channel": channel,
+                "keyword": keyword
+            }
+            
+            await event.edit(
+                dm.t(prompt_key, channel=channel, keyword=keyword),
+                buttons=[[Button.inline(dm.t("btn_cancel"), f"view_track|{channel}|{keyword}".encode('utf-8'))]]
+            )
+
+
 
         # --- SETTINGS ---
         elif data == "menu_settings":
@@ -134,9 +156,9 @@ async def callback_handler(event):
         elif data == "menu_help":
             await event.edit(
                 f"🛡️ **KeyWSniper v{VERSION}**\n\n"
-                "🚀 **Geliştirici / Developer:** @siimsek\n"
-                "📂 **GitHub:** [Source Code](https://github.com/siimsek/KeyWSniper)\n\n"
-                "ℹ️ *Bu bot açık kaynaklıdır ve sürekli geliştirilmektedir.*",
+                "🚀 **Dev:** @siimsek\n"
+                "📂 **GitHub:** [Source Code](https://github.com/siimsek/KeyWSniper)\n\n",
+                link_preview=False,
                 buttons=[[Button.inline(dm.t("btn_back"), b"main_menu")]]
             )
 
@@ -237,6 +259,7 @@ async def input_handler(event):
             
             await event.respond(
                 dm.t("add_step_2", channel=channel_input),
+                link_preview=False,
                 buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
             )
 
@@ -253,6 +276,7 @@ async def input_handler(event):
             
             await event.respond(
                 dm.t("add_step_3", keyword=keyword),
+                link_preview=False,
                 buttons=[[Button.inline(dm.t("btn_cancel"), b"main_menu")]]
             )
 
@@ -270,10 +294,54 @@ async def input_handler(event):
                 
             dm.user_states[event.sender_id] = {}
             
-            await event.respond(msg, buttons=[
+            await event.respond(msg, link_preview=False, buttons=[
                 [Button.inline(dm.t("btn_add"), b"menu_add")], # Add again
                 [Button.inline(dm.t("btn_back"), b"main_menu")]
             ])
+
+        # Edit Input
+        elif state == "AWAIT_EDIT_INPUT":
+            new_value = event.message.message.strip()
+            field = state_data.get("field")
+            channel = state_data.get("channel")
+            keyword = state_data.get("keyword")
+            
+            success = False
+            
+            if field == "channel":
+                # Format channel input
+                match = re.search(r"(?:t|telegram)\.me/(?P<username>[\w_]+)", new_value)
+                if match:
+                    new_value = f"@{match.group('username')}"
+                elif not new_value.startswith("@") and not re.match(r"^-?\d+$", new_value):
+                     new_value = f"@{new_value}"
+                     
+                if dm.edit_channel(channel, new_value):
+                    channel = new_value # Update for redirect
+                    success = True
+            
+            elif field == "keyword":
+                if dm.edit_keyword(channel, keyword, new_value):
+                    keyword = new_value # Update for redirect
+                    success = True
+                    
+            elif field == "note":
+                if dm.edit_note(channel, keyword, new_value):
+                    success = True
+            
+            dm.user_states[event.sender_id] = {}
+            
+            if success:
+                await event.respond(
+                    dm.t("edit_success"),
+                    link_preview=False,
+                    buttons=[[Button.inline(dm.t("btn_back"), f"view_track|{channel}|{keyword}".encode('utf-8'))]]
+                )
+            else:
+                await event.respond(
+                    dm.t("edit_fail"),
+                    buttons=[[Button.inline(dm.t("btn_cancel"), f"view_track|{channel}|{keyword}".encode('utf-8'))]]
+                )
             
     except Exception as e:
         logging.error(f"Input Handler Error: {e}")

@@ -118,6 +118,89 @@ class DataManager:
                         count += 1
         return count
 
+    def edit_channel(self, old_channel, new_channel):
+        channels = self.data.get("channels", {})
+        old_channel = str(old_channel)
+        new_channel = str(new_channel)
+        
+        if old_channel not in channels:
+            return False
+            
+        # If new channel exists, merge keywords
+        if new_channel in channels:
+            # This is complex, for simplicity in this version:
+            # Move all keywords. If keyword exists in target, skip or duplicate?
+            # Let's append and let user clean up if needed.
+            channels[new_channel].extend(channels[old_channel])
+        else:
+            channels[new_channel] = channels[old_channel]
+            
+        del channels[old_channel]
+        self.save_data()
+        return True
+
+    def edit_keyword(self, channel, old_keyword, new_keyword):
+        channels = self.data.get("channels", {})
+        channel = str(channel)
+        if channel not in channels: return False
+        
+        # Check if new keyword already exists
+        for entry in channels[channel]:
+            k_str = entry["keyword"] if isinstance(entry, dict) else entry
+            if k_str.lower() == new_keyword.lower():
+                return False # Already exists
+        
+        found = False
+        for i, entry in enumerate(channels[channel]):
+            k_str = entry["keyword"] if isinstance(entry, dict) else entry
+            if k_str.lower() == old_keyword.lower():
+                if isinstance(entry, dict):
+                    channels[channel][i]["keyword"] = new_keyword
+                else:
+                    channels[channel][i] = {"keyword": new_keyword, "note": ""}
+                found = True
+                break
+        
+        if found:
+            self.save_data()
+            return True
+        return False
+
+    def edit_note(self, channel, keyword, new_note):
+        channels = self.data.get("channels", {})
+        channel = str(channel)
+        if channel not in channels: return False
+        
+        found = False
+        for i, entry in enumerate(channels[channel]):
+            k_str = entry["keyword"] if isinstance(entry, dict) else entry
+            if k_str.lower() == keyword.lower():
+                if isinstance(entry, dict):
+                    channels[channel][i]["note"] = new_note
+                else:
+                    channels[channel][i] = {"keyword": k_str, "note": new_note}
+                found = True
+                break
+        
+        if found:
+            self.save_data()
+            return True
+        return False
+
+    def get_keyword_data(self, channel, keyword):
+        channels = self.data.get("channels", {})
+        channel = str(channel)
+        if channel not in channels: return None
+        
+        for entry in channels[channel]:
+            k_str = entry["keyword"] if isinstance(entry, dict) else entry
+            if k_str.lower() == keyword.lower():
+                if isinstance(entry, dict):
+                    return entry
+                else:
+                    return {"keyword": k_str, "note": ""}
+        return None
+
     def get_all_channels(self):
         return self.data.get("channels", {})
     
