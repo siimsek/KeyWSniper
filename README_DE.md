@@ -52,13 +52,21 @@ Auf Render werden Dateien beim Neustart gelöscht. Um Ihre Daten zu sichern:
 Render versetzt Dienste im kostenlosen Tarif bei Inaktivität in den Ruhezustand. Um dies zu verhindern:
 
 1. Kopieren Sie Ihre Render Web Service URL (z. B. `https://keywsniper.onrender.com`).
-2. Gehen Sie zu [UptimeRobot](https://uptimerobot.com/) und erstellen Sie ein kostenloses Konto.
-3. Klicken Sie auf **"Add New Monitor"**.
+### Option 1: UptimeRobot
+1. Gehen Sie zu [UptimeRobot](https://uptimerobot.com/) und erstellen Sie ein kostenloses Konto.
+2. Klicken Sie auf **"Add New Monitor"**.
    - **Monitor Type:** HTTP(s)
    - **Friendly Name:** KeyWSniper
    - **URL:** Fügen Sie Ihre Render URL ein
    - **Monitoring Interval:** 5 minutes (5 Minuten)
-4. Speichern Sie. UptimeRobot pingt Ihren Bot alle 5 Minuten an, um ihn wach zu halten.
+3. Speichern Sie.
+
+### Option 2: Better Stack (Empfohlen)
+1. Gehen Sie zu [Better Stack](https://betterstack.com/uptime) und registrieren Sie sich.
+2. Erstellen Sie einen neuen Monitor.
+   - **URL:** Fügen Sie Ihre Render URL ein (z. B. `https://keywsniper.onrender.com/health`)
+   - **Check interval:** 3 minutes
+3. Speichern Sie. Dies ist oft schneller und moderner.
 
 ## Lokale Installation
 

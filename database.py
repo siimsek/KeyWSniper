@@ -29,7 +29,7 @@ class DataManager:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except Exception as e:
+        except (json.JSONDecodeError, Exception) as e:
             logging.error(f"JSON Load Error ({filepath}): {e}")
             return default
 

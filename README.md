@@ -53,13 +53,21 @@ On Render (and most cloud platforms), files are deleted when the bot restarts or
 Render free tier puts services to sleep after inactivity. To prevent this:
 
 1. Copy your Render Web Service URL (e.g., `https://keywsniper.onrender.com`).
-2. Go to [UptimeRobot](https://uptimerobot.com/) and create a free account.
-3. Click **"Add New Monitor"**.
+### Option 1: UptimeRobot
+1. Go to [UptimeRobot](https://uptimerobot.com/) and create a free account.
+2. Click **"Add New Monitor"**.
    - **Monitor Type:** HTTP(s)
    - **Friendly Name:** KeyWSniper
    - **URL:** Paste your Render URL
    - **Monitoring Interval:** 5 minutes
-4. Save. UptimeRobot will ping your bot every 5 minutes to keep it awake.
+3. Save.
+
+### Option 2: Better Stack (Recommended)
+1. Go to [Better Stack](https://betterstack.com/uptime) and sign up.
+2. Create a new monitor.
+   - **URL:** Paste your Render URL (e.g., `https://keywsniper.onrender.com/health`)
+   - **Check interval:** 3 minutes
+3. Save. This is often faster and has a modern interface.
 
 ## Local Installation
 

@@ -53,13 +53,21 @@ Render gibi bulut sistemlerinde bot yeniden başladığında dosyalar silinir (t
 Render ücretsiz paketi, işlem yapılmadığında servisi uyku moduna alır. Bunu engellemek için:
 
 1. Render Web Service URL adresinizi kopyalayın (Örn: `https://keywsniper.onrender.com`).
-2. [UptimeRobot](https://uptimerobot.com/) sitesine gidin ve ücretsiz hesap açın.
-3. **"Add New Monitor"** butonuna tıklayın.
+### Seçenek 1: UptimeRobot
+1. [UptimeRobot](https://uptimerobot.com/) sitesine gidin ve ücretsiz hesap açın.
+2. **"Add New Monitor"** butonuna tıklayın.
    - **Monitor Type:** HTTP(s)
    - **Friendly Name:** KeyWSniper
    - **URL:** Render adresinizi yapıştırın
    - **Monitoring Interval:** 5 minutes (5 dakika)
-4. Kaydedin. UptimeRobot botunuza 5 dakikada bir ping atarak uyumasını engelleyecektir.
+3. Kaydedin.
+
+### Seçenek 2: Better Stack (Önerilen)
+1. [Better Stack](https://betterstack.com/uptime) sitesine gidin ve üye olun.
+2. Yeni bir monitör oluşturun.
+   - **URL:** Render adresinizi yapıştırın (Örn: `https://keywsniper.onrender.com/health`)
+   - **Check interval:** 3 minutes
+3. Kaydedin. Arayüzü daha modern ve hızlıdır.
 
 ## Yerel Kurulum (Kendi Bilgisayarınızda)
 

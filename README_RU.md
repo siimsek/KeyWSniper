@@ -52,13 +52,21 @@
 Бесплатный тариф Render переводит сервисы в спящий режим при отсутствии активности. Чтобы этого избежать:
 
 1. Скопируйте URL вашего веб-сервиса Render (например, `https://keywsniper.onrender.com`).
-2. Перейдите на [UptimeRobot](https://uptimerobot.com/) и создайте бесплатный аккаунт.
-3. Нажмите **"Add New Monitor"**.
+### Вариант 1: UptimeRobot
+1. Перейдите на [UptimeRobot](https://uptimerobot.com/) и создайте бесплатный аккаунт.
+2. Нажмите **"Add New Monitor"**.
    - **Monitor Type:** HTTP(s)
    - **Friendly Name:** KeyWSniper
    - **URL:** Вставьте ваш URL Render
    - **Monitoring Interval:** 5 minutes
-4. Сохраните. UptimeRobot будет пинговать ваш бот каждые 5 минут, чтобы он не засыпал.
+3. Сохраните.
+
+### Вариант 2: Better Stack (Рекомендуется)
+1. Перейдите на [Better Stack](https://betterstack.com/uptime) и зарегистрируйтесь.
+2. Создайте новый монитор.
+   - **URL:** Вставьте ваш URL Render (например, `https://keywsniper.onrender.com/health`)
+   - **Check interval:** 3 minutes
+3. Сохраните. Это часто быстрее и имеет современный интерфейс.
 
 ## Локальная установка
 

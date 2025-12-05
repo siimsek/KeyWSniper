@@ -1,25 +1,43 @@
+import os
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
-import os
 from dotenv import load_dotenv
 
+# Load .env if exists
 load_dotenv()
 
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
+print("="*50)
+print("🔐 Telegram String Session Generator")
+print("="*50)
+print("This tool generates the 'SESSION_STRING' required to keep your session")
+print("active on platforms like Render.\n")
 
-if not API_ID or not API_HASH:
-    print("Error: Please make sure API_ID and API_HASH are set in your .env file.")
-    exit()
+api_id = os.getenv("API_ID")
+api_hash = os.getenv("API_HASH")
 
-print("--- TELEGRAM SESSION GENERATOR ---")
-print("Connecting to Telegram servers...")
-print("You will be asked to enter your phone number and the code you receive.")
-print("------------------------------------")
+if not api_id or not api_hash:
+    print("⚠️ API_ID or API_HASH not found in .env file.")
+    print("Please enter them manually below:")
+    api_id = input("API ID: ").strip()
+    api_hash = input("API HASH: ").strip()
 
-with TelegramClient(StringSession(), int(API_ID), API_HASH) as client:
-    session_string = client.session.save()
-    print("\n⬇️ COPY THE CODE BELOW (Add this to Render) ⬇️\n")
-    print(session_string)
-    print("\n⬆️ COPY THE CODE ABOVE ⬆️")
-    print("\nAdd this code to Render.com Environment Variables as 'SESSION_STRING'.")
+try:
+    with TelegramClient(StringSession(), int(api_id), api_hash) as client:
+        print("\n✅ Login Successful!")
+        session_string = client.session.save()
+        print("\n👇 COPY THE CODE BELOW 👇\n")
+        print(session_string)
+        print("\n👆 COPY THE CODE ABOVE 👆\n")
+        print("Add this to 'Environment Variables' on Render.com:")
+        print("Key: SESSION_STRING")
+        print("Value: (The code you copied)")
+        
+        # Optional: Save to file
+        with open("session_string.txt", "w") as f:
+            f.write(session_string)
+        print("\n(Also saved to session_string.txt)")
+        
+except Exception as e:
+    print(f"\n❌ Error occurred: {e}")
+
+input("\nPress Enter to exit...")

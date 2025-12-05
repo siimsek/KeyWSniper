@@ -64,18 +64,25 @@ async def main():
     
     print("1. Connecting Userbot...")
     await userbot.connect()
-    if not await userbot.is_user_authorized():
-        print("⚠️ Userbot NOT authorized. Interactive login might be required.")
-        print("Please check your SESSION_STRING if you expected automatic login.")
-    else:
+    
+    userbot_active = False
+    if await userbot.is_user_authorized():
         print("✅ Userbot Authorized via Session.")
-        
-    await userbot.start()
+        await userbot.start()
+        userbot_active = True
+    else:
+        print("⚠️ CRITICAL: Userbot NOT authorized. Skipping Userbot startup.")
+        print("ℹ️ Please set SESSION_STRING in environment variables.")
+
     print("2. Connecting Bot Interface...")
     await bot.start(bot_token=BOT_TOKEN)
     print("✅ System Ready!")
     
-    await asyncio.gather(userbot.run_until_disconnected(), bot.run_until_disconnected())
+    tasks = [bot.run_until_disconnected()]
+    if userbot_active:
+        tasks.append(userbot.run_until_disconnected())
+        
+    await asyncio.gather(*tasks)
 
 if __name__ == '__main__':
     # Asyncio loop fix for Python 3.10+
