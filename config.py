@@ -24,4 +24,4 @@ LOCALES_FILE = "locales.json"
 PORT = int(os.getenv("PORT", 8080))
 
 # Bot Version
-VERSION = "1.7.6"
+VERSION = "1.7.7"

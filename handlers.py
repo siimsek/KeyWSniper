@@ -475,8 +475,8 @@ async def channel_watcher(event, bot_client):
                 
                 notification_text = (
                     f"{dm.t('notification_title', keyword=matched_keyword.upper())}\n\n"
+                    f"{note_part}"
                     f"{dm.t('notification_channel', channel=chat_title)}\n"
-                    f"🔗 [Link]({msg_link})\n"
                     f"──────────────\n"
                     f"{display_text}"
                 )
